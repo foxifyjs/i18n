@@ -23,6 +23,6 @@ it("Should throw an error when trying to set an unknown locale", () => {
   expect(i18n.locale).toBe("en");
   expect(i18n.direction).toBe("ltr");
   expect(() => i18n.setLocale("fa")).toThrowError(
-    'Expected locale to be one of [en], got "fa" instead.',
+    "Expected locale to be one of [en], got 'fa' instead.",
   );
 });

@@ -54,18 +54,37 @@ Locales support dot notation and parameters...
 
 ```js
 I18n.config({
-  fallback: "en",
-  locales: {
+  fallback: "en", // optional, default: "en"
+  locales: { // required
     en: {
       names: {
         Ardalan: "Ardalan",
       },
       greetings: {
         hello: "hello",
-        hi: "hi, {{name}}", // translation with parameters
+        hi: "hi, {{name}}", // translation with parameters (required parameter)
+        hi2: "hi, {{name=}}", // optional parameter
+        // default output: "hi, "
+
+        hi3: "hi, {{name=foo}}", // optional parameter with default value: "foo"
+        // default output: "hi, foo"
+
+        hi4: "hi, {{name=$names.Ardalan}}", // optional parameter with default value referenced to translation: "Ardalan"
+        // default output: "hi, Ardalan"
+
+        hi5: "hi, {{$names.Ardalan}}", // value referenced to translation: "Ardalan" (this is not considered as a parameter)
+        // output: "hi, Ardalan"
       },
     },
   },
+  severity: "error", // optional, default: "error"
+  // `ignore`: will return the key if no translation was found
+  // `warn`: will warn (`console.warn`) and return the key if no translation was found
+  // `error`: will throw an error if no translation was found
+
+  strict: false, // optional, default: false
+  // true: don't use the fallback locale for translation
+  // false: use the fallback locale if necessary
 });
 ```
 
@@ -74,7 +93,25 @@ I18n.config({
 The `I18n` constructor accepts an optional locale parameter, which would be the fallback locale by default.
 
 ```js
+const i18n = new I18n();
+```
+
+Set the locale when creating new instance:
+
+```js
 const i18n = new I18n("en");
+```
+
+Set the strict mode when creating new instance:
+
+```js
+const i18n = new I18n(true);
+```
+
+Set the locale and the strict mode when creating new instance:
+
+```js
+const i18n = new I18n("en", true);
 ```
 
 ### Properties
@@ -88,13 +125,16 @@ console.log(i18n.direction); // instance's locale direction: "rtl" | "ltr"
 ### translate
 
 Translates the given string according the instance's locale and configured locales;
-If it doesn't find any translation it will try again with the fallback locale,
+If it doesn't find any translation and it isn't in strict mode, it will try again with the fallback locale;
 If it doesn't find any translation again, it will throw an error.
 
 ```js
 i18n.translate("greetings.hello");
 i18n.t("greetings.hello");
 // hello
+
+i18n.translate("greetings.hello", true); // strict mode
+i18n.t("greetings.hello", true);
 
 i18n.translate("greetings.hi", { name: "Ardalan!" }); // pass the params
 i18n.t("greetings.hi", { name: "Ardalan!" });
@@ -103,6 +143,9 @@ i18n.t("greetings.hi", { name: "Ardalan!" });
 i18n.translate("greetings.hi", { name: "$names.Ardalan" }); // you can use reference as param too
 i18n.t("greetings.hi", { name: "$names.Ardalan" });
 // hi, Ardalan
+
+i18n.translate("greetings.hi", { name: "$names.Ardalan" }, true); // strict mode
+i18n.t("greetings.hi", { name: "$names.Ardalan" }, true);
 ```
 
 ## Versioning

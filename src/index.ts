@@ -2,31 +2,32 @@ import flatten from "prototyped.js/es6/object/flatten/method";
 import reduce from "prototyped.js/es6/object/reduce/method";
 
 const RTL = ["ar", "dv", "he", "ku", "fa", "ur"];
+const SEVERITY = ["ignore", "warn", "error"];
 
 const CONFIG = {
   fallback: "en",
   locales: [] as string[],
+  severity: "error" as I18n.Severity,
+  strict: false,
 };
 
 let LOCALES: I18n.FlatLocales = {};
+
+const unExpectedLocale = (value: string, name: string) =>
+  `Expected ${name} to be one of [${CONFIG.locales}], got '${value}' instead.`;
 
 function assert(condition: boolean, message: string) {
   if (!condition) throw new Error(message);
 }
 
-function assertLocale(value: string, name: string) {
-  assert(
-    CONFIG.locales.includes(value),
-    `Expected ${name} to be one of [${
-      CONFIG.locales
-    }], got "${value}" instead.`,
-  );
-}
-
 namespace I18n {
+  export type Severity = "ignore" | "warn" | "error";
+
   export interface Config {
     fallback?: string;
-    locales: I18n.Locales;
+    locales: Locales;
+    severity?: Severity;
+    strict?: boolean;
   }
 
   export interface Locales {
@@ -49,16 +50,35 @@ interface I18n {
 
 class I18n {
   public static config(config: I18n.Config) {
-    const { fallback = "en", locales } = config;
+    const {
+      fallback = "en",
+      locales,
+      severity = "error",
+      strict = false,
+    } = config;
 
     CONFIG.locales = Object.keys(locales);
 
-    assertLocale(fallback, "fallback");
+    assert(
+      CONFIG.locales.includes(fallback),
+      unExpectedLocale(fallback, "fallback"),
+    );
 
     CONFIG.fallback = fallback;
 
     LOCALES = flatten(locales);
+
+    assert(
+      SEVERITY.includes(severity),
+      `Expected severity to be one of [${SEVERITY}], got '${severity}' instead.`,
+    );
+
+    CONFIG.severity = severity;
+
+    CONFIG.strict = strict;
   }
+
+  protected _strict: boolean;
 
   protected _locale!: string;
 
@@ -72,14 +92,37 @@ class I18n {
     return "ltr";
   }
 
-  constructor(locale = CONFIG.fallback!) {
+  constructor(locale?: string | boolean);
+  constructor(locale: string, strict?: boolean);
+  constructor(locale: string | boolean = CONFIG.fallback, strict = CONFIG.strict) {
+    if (typeof locale === "boolean") {
+      strict = locale;
+      locale = CONFIG.fallback;
+    }
+
+    this._strict = strict;
+
     this.t = this.translate;
 
     this.setLocale(locale);
   }
 
   public setLocale(locale: string) {
-    assertLocale(locale, "locale");
+    if (!CONFIG.locales.includes(locale)) {
+      const message = unExpectedLocale(locale, "locale");
+
+      switch (CONFIG.severity) {
+        case "warn":
+          // tslint:disable-next-line:no-console
+          console.warn(message);
+        case "ignore":
+          locale = CONFIG.fallback;
+          break;
+        case "error":
+        default:
+          throw new Error(message);
+      }
+    }
 
     this._locale = locale;
 
@@ -91,9 +134,9 @@ class I18n {
   public translate(
     key: string,
     params: I18n.Params | boolean = {},
-    strict = false,
+    strict = this._strict,
   ) {
-    if (typeof params !== "object") {
+    if (typeof params === "boolean") {
       strict = params;
       params = {};
     }
@@ -102,17 +145,42 @@ class I18n {
 
     if (!result && !strict) result = LOCALES[`${CONFIG.fallback}.${key}`];
 
-    assert(!!result, `Couldn't find the translation for "${key}"`);
+    if (!result) {
+      const message = `Couldn't find any translation for '${key}'.`;
 
-    return reduce(
-      params,
-      (res: string, value: string, param: string) => {
-        if (value.indexOf("$") === 0) value = this.t(value.slice(1));
+      switch (CONFIG.severity) {
+        case "warn":
+          // tslint:disable-next-line:no-console
+          console.warn(message);
+        case "ignore":
+          return key;
+        case "error":
+        default:
+          throw new Error(message);
+      }
+    }
 
-        return res.replace(new RegExp(`\{\{${param}\}\}`, "g"), value);
-      },
-      result,
-    );
+    return result
+      .replace(/\{\{\$([^{} \r\n\t`~!@#$%^&*()-_+=?]+)\}\}/g, (_, ref) =>
+        this.t(ref),
+      )
+      .replace(
+        /\{\{([^{} \r\n\t`~!@#$%^&*()-_+=?]+)(=([^{} \r\n\t`~!@#%^&*()-_+=?]*))?\}\}/g,
+        (_, param, __, def) => {
+          const value = (params as I18n.Params)[param] || def;
+
+          const type = typeof value;
+          if (type !== "string") {
+            throw new Error(
+              `Expected parameter '${param}' to be an string, got '${type}' instead.`,
+            );
+          }
+
+          if (value.indexOf("$") === 0) return this.t(value.slice(1));
+
+          return value;
+        },
+      );
   }
 }
 
