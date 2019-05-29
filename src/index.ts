@@ -1,5 +1,4 @@
 import flatten from "prototyped.js/es6/object/flatten/method";
-import reduce from "prototyped.js/es6/object/reduce/method";
 
 const RTL = ["ar", "dv", "he", "ku", "fa", "ur"];
 const SEVERITY = ["ignore", "warn", "error"];
