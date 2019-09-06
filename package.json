@@ -1,6 +1,6 @@
 {
   "name": "@foxify/i18n",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A lightweight translation module for Node.js and browser",
   "author": {
     "name": "Ardalan Amini",
@@ -38,18 +38,18 @@
     "codecov": "npm run build && npm run coverage -- --runInBand && codecov"
   },
   "peerDependencies": {
-    "prototyped.js": "^1.0.0"
+    "prototyped.js": "^1.0.1"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.13",
-    "@types/node": "^12.0.3",
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.7.4",
     "codecov": "^3.5.0",
-    "jest": "^24.8.0",
-    "prototyped.js": "^1.0.0",
+    "jest": "^24.9.0",
+    "prototyped.js": "^1.0.1",
     "ts-jest": "^24.0.2",
-    "tslint": "^5.16.0",
+    "tslint": "^5.19.0",
     "tslint-config-airbnb": "^5.11.1",
-    "typescript": "^3.5.1"
+    "typescript": "^3.6.2"
   },
   "jest": {
     "moduleFileExtensions": [

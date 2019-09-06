@@ -13,6 +13,11 @@
 
 ---
 
+## [v1.1.1](https://github.com/foxifyjs/i18n/releases/tag/v1.1.1) - _(2019-09-06)_
+
+- :beetle: Fixed an issue causing unresolved references
+- :package: peer dependency `prototyped.js`: `^1.0.0` -> `^1.0.1`
+
 ## [v1.1.0](https://github.com/foxifyjs/i18n/releases/tag/v1.1.0) - _(2019-05-29)_
 
 - :zap: Added ability to define optional parameter
